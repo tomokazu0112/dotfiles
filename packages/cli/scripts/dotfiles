@@ -1,0 +1,101 @@
+#!/bin/sh
+
+set -e
+
+GIT_CLONE_PATH=~/.dotfiles
+STOW_PACKAGES_PATH="$GIT_CLONE_PATH"/packages
+
+###########################################################
+# Options
+###########################################################
+
+unlink_packages=
+verbose=
+for i in "$@"; do
+    case "$i" in
+        -s|--skip-apps)
+            skip_apps=1
+            ;;
+        -v|--verbose)
+            verbose=1
+            ;;
+        -u=*|--unlink=*)
+            unlink_packages="${i#*=}"
+            ;;
+        *) ;;
+    esac
+done
+
+###########################################################
+# Utils
+###########################################################
+
+log() {
+    message=$1
+    echo 📌 "$message"
+}
+
+is_file() {
+    path="$1"
+    [ -f "$path" ]
+}
+
+is_dir() {
+    path="$1"
+    [ -d "$path" ]
+}
+
+ensure_dir() {
+    path="$1"
+    if ! is_dir "$path"; then
+        mkdir -p "$path"
+    fi
+}
+
+###########################################################
+# Install Homebrew
+###########################################################
+
+if ! is_file /opt/homebrew/bin/brew; then
+    log 'Setup Homebrew'
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    (echo; echo 'eval "$(/opt/homebrew/bin/brew shellenv)"') >> ~/.zprofile
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+
+    log 'Install Rosetta 2'
+    sudo softwareupdate --install-rosetta
+fi
+
+if ! is_dir "$GIT_CLONE_PATH"; then
+    ensure_dir "$GIT_CLONE_PATH"
+
+    log 'Clone dotfiles'
+    cd "$GIT_CLONE_PATH"
+    git clone https://github.com/tomokazu0112/dotfiles.git
+fi
+
+if [ ! "$skip_apps" ]; then
+    log 'Install Apps and CLIs'
+    brew bundle --file "$GIT_CLONE_PATH"/Brewfile $([ -n "$verbose" ] && echo -v)
+fi
+
+###########################################################
+# Stow link
+###########################################################
+
+log 'Link dotfiles'
+ensure_dir ~/.config/alacritty
+
+# shellcheck disable=SC2046
+stow -vd "$STOW_PACKAGES_PATH" -t ~ $(ls $STOW_PACKAGES_PATH)
+
+###########################################################
+# Git
+###########################################################
+
+if ! is_file ~/.ssh/id_ed25519.pub; then
+    log 'Setup signing for git'
+    ssh-keygen -t ed25519 -C "atlof_fed_1win6_tomo@yahoo.co.jp"
+    log 'Copy and pates the SSH key below to GitHub'
+    cat ~/.ssh/id_ed25519.pub
+fi
