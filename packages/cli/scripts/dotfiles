@@ -9,6 +9,7 @@ STOW_PACKAGES_PATH="$GIT_CLONE_PATH"/packages
 # Options
 ###########################################################
 
+skip_apps=
 unlink_packages=
 verbose=
 for i in "$@"; do
@@ -53,6 +54,16 @@ ensure_dir() {
 }
 
 ###########################################################
+# Stow unlink
+###########################################################
+
+if [ -n "$unlink_packages" ]; then
+    log 'Unlinking dotfiles...'
+    stow -vD -d "$STOW_PACKAGES_PATH" -t ~ "$unlink_packages"
+    exit
+fi
+
+###########################################################
 # Install Homebrew
 ###########################################################
 
@@ -84,10 +95,20 @@ fi
 ###########################################################
 
 log 'Link dotfiles'
+ensure_dir ~/scripts
+ensure_dir ~/.config/karabiner
+ASDF_PATH=~/.asdf
+ensure_dir "$ASDF_PATH"
 ensure_dir ~/.config/alacritty
+ensure_dir ~/.zsh
+ensure_dir ~/.zsh/zsh-autosuggestions
 
 # shellcheck disable=SC2046
 stow -vd "$STOW_PACKAGES_PATH" -t ~ $(ls $STOW_PACKAGES_PATH)
+
+# configure macOS settings
+ensure_dir ~/screenshots
+~/scripts/macos-defaults
 
 ###########################################################
 # Git
@@ -95,7 +116,9 @@ stow -vd "$STOW_PACKAGES_PATH" -t ~ $(ls $STOW_PACKAGES_PATH)
 
 if ! is_file ~/.ssh/id_ed25519.pub; then
     log 'Setup signing for git'
-    ssh-keygen -t ed25519 -C "atlof_fed_1win6_tomo@yahoo.co.jp"
+    echo 'Please enter your email address: '
+    read email
+    ssh-keygen -t ed25519 -C "$email"
     log 'Copy and pates the SSH key below to GitHub'
     cat ~/.ssh/id_ed25519.pub
 fi

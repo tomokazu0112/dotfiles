@@ -1,0 +1,75 @@
+#!/bin/sh
+
+set -e
+
+echo 📌 Configuring macOS default settings
+
+# Close any open System Preferences panes, to prevent them from overriding
+# settings we’re about to change
+osascript -e 'tell application "System Preferences" to quit'
+
+###########################################################
+# General Settings
+###########################################################
+# クラッシュ時の警告表示を非表示
+defaults write com.apple.CrashReporter DialogType -string "none"
+
+###########################################################
+# Keyboard
+###########################################################
+# キーリピート
+defaults write NSGlobalDomain KeyRepeat -int 2
+defaults write NSGlobalDomain InitialKeyRepeat -int 15
+
+###########################################################
+# Trackpad
+###########################################################
+# カーソルの移動速度
+defaults write -g com.apple.trackpad.scaling -int 3
+# スクロール速度
+defaults write -g com.apple.trackpad.scrolling -int 1
+# シングルタップクリック
+defaults write com.apple.AppleMultitouchTrackpad Clicking -bool true
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
+defaults -currentHost write -g com.apple.mouse.tapBehavior -bool true
+# 三本指でドラッグ
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadThreeFingerDrag -bool true
+defaults write com.apple.AppleMultitouchTrackpad TrackpadThreeFingerDrag -bool true
+
+###########################################################
+# Mouse
+###########################################################
+# カーソルの移動速度
+defaults write -g com.apple.mouse.scaling -int 10
+
+###########################################################
+# Dock
+###########################################################
+# 自動非表示
+defaults write com.apple.dock autohide -bool true
+# エフェクトをスケールへ
+defaults write com.apple.dock mineffect -string scale
+# 位置を左へ
+defaults write com.apple.dock orientation -string left
+# サイズを小さく
+defaults write com.apple.dock tilesize -int 35
+
+###########################################################
+# Menu Bar
+###########################################################
+# パスバーの表示
+defaults write com.apple.finder ShowPathbar -bool true
+
+###########################################################
+# Finder
+###########################################################
+# 拡張子の表示
+defaults write -g AppleShowAllExtensions -bool true
+
+###########################################################
+# Screenshot
+###########################################################
+# 撮影後のサムネイル非表示
+defaults write com.apple.screencapture show-thumbnail -bool false
+# 保存ディレクトリの変更
+defaults write com.apple.screencapture location -string "${HOME}/screenshots"
